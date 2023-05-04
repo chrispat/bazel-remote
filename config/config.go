@@ -51,6 +51,7 @@ type Config struct {
 	S3CloudStorage              *S3CloudStorageConfig     `yaml:"s3_proxy,omitempty"`
 	AzBlobConfig                *AzBlobStorageConfig      `yaml:"azblob_proxy,omitempty"`
 	GoogleCloudStorage          *GoogleCloudStorageConfig `yaml:"gcs_proxy,omitempty"`
+	GitHubActionsCacheConfig    *GitHubActionsCacheConfig `yaml:"gha_proxy,omitempty"`
 	HTTPBackend                 *HTTPBackendConfig        `yaml:"http_proxy,omitempty"`
 	NumUploaders                int                       `yaml:"num_uploaders"`
 	MaxQueuedUploads            int                       `yaml:"max_queued_uploads"`
@@ -110,6 +111,7 @@ func newFromArgs(dir string, maxSize int, storageMode string, zstdImplementation
 	gcs *GoogleCloudStorageConfig,
 	s3 *S3CloudStorageConfig,
 	azblob *AzBlobStorageConfig,
+	gha *GitHubActionsCacheConfig,
 	disableHTTPACValidation bool,
 	disableGRPCACDepsCheck bool,
 	enableACKeyInstanceMangling bool,
@@ -140,6 +142,7 @@ func newFromArgs(dir string, maxSize int, storageMode string, zstdImplementation
 		S3CloudStorage:              s3,
 		AzBlobConfig:                azblob,
 		GoogleCloudStorage:          gcs,
+		GitHubActionsCacheConfig:    gha,
 		HTTPBackend:                 hc,
 		IdleTimeout:                 idleTimeout,
 		DisableHTTPACValidation:     disableHTTPACValidation,
@@ -253,6 +256,9 @@ func validateConfig(c *Config) error {
 		proxyCount++
 	}
 	if c.AzBlobConfig != nil {
+		proxyCount++
+	}
+	if c.GitHubActionsCacheConfig != nil {
 		proxyCount++
 	}
 
@@ -492,6 +498,14 @@ func get(ctx *cli.Context) (*Config, error) {
 		}
 	}
 
+	var gha *GitHubActionsCacheConfig
+	if ctx.String("gha.auth_token") != "" {
+		gha = &GitHubActionsCacheConfig{
+			AuthToken: ctx.String("gha.auth_token"),
+			CacheUrl:  ctx.String("gha.cache_url"),
+		}
+	}
+
 	return newFromArgs(
 		ctx.String("dir"),
 		ctx.Int("max_size"),
@@ -512,6 +526,7 @@ func get(ctx *cli.Context) (*Config, error) {
 		gcs,
 		s3,
 		azblob,
+		gha,
 		ctx.Bool("disable_http_ac_validation"),
 		ctx.Bool("disable_grpc_ac_deps_check"),
 		ctx.Bool("enable_ac_key_instance_mangling"),

@@ -6,6 +6,7 @@ import (
 
 	"github.com/buchgr/bazel-remote/v2/cache/azblobproxy"
 	"github.com/buchgr/bazel-remote/v2/cache/gcsproxy"
+	"github.com/buchgr/bazel-remote/v2/cache/ghaproxy"
 	"github.com/buchgr/bazel-remote/v2/cache/httpproxy"
 	"github.com/buchgr/bazel-remote/v2/cache/s3proxy"
 )
@@ -71,6 +72,15 @@ func (c *Config) setProxy() error {
 			creds,
 			c.AzBlobConfig.SharedKey,
 			c.AzBlobConfig.UpdateTimestamps,
+			c.StorageMode, c.AccessLogger, c.ErrorLogger, c.NumUploaders, c.MaxQueuedUploads,
+		)
+		return nil
+	}
+
+	if c.GitHubActionsCacheConfig != nil {
+		c.ProxyBackend = ghaproxy.New(
+			c.GitHubActionsCacheConfig.CacheUrl,
+			c.GitHubActionsCacheConfig.AuthToken,
 			c.StorageMode, c.AccessLogger, c.ErrorLogger, c.NumUploaders, c.MaxQueuedUploads,
 		)
 		return nil
